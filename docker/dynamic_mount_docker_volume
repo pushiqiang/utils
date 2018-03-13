@@ -1,0 +1,54 @@
+#!/bin/bash
+#This script is dynamic mount docker volumens
+#Author Deng Lei
+if [ -z $1 ] || [ -z $2 ] || [ -z $3 ]; then
+    echo "Usage: container_name physics_volumes container_volumes"
+    echo "Example: I want mount physics /tmp/test to container /src in test"
+    echo "The command is: bash `basename $0` test_container_id /tmp/test /src "
+    exit 1
+fi
+which nsenter &>>/dev/null
+if [ $? -ne 0 ];then
+    echo "plsease install nsenser,command is:yum install util-linux"
+    exit 1
+fi
+set -e
+CONTAINER=$1
+HOSTPATH=$2
+CONTPATH=$3
+if [ ! -d $HOSTPATH ];then
+    echo "physics $HOSTPATH is not exist!"
+    exit 1
+fi
+REALPATH=$(readlink --canonicalize $HOSTPATH)
+FILESYS=$(df -P $REALPATH | tail -n 1 | awk '{print $6}')
+while read DEV MOUNT JUNK
+    do
+        [ $MOUNT = $FILESYS ] && [ $DEV != "rootfs" ] && break
+    done </proc/mounts
+[ $MOUNT = $FILESYS ] # Sanity check!
+while read A B C SUBROOT MOUNT JUNK
+    do [ $MOUNT = $FILESYS ] && break
+    done < /proc/self/mountinfo
+[ $MOUNT = $FILESYS ] # Moar sanity check!
+SUBPATH=$(echo $REALPATH | sed s,^$FILESYS,,)
+DEVDEC=$(printf "%d %d" $(stat --format "0x%t 0x%T" $DEV))
+PID=$(docker inspect --format "{{.State.Pid}}" "$CONTAINER")
+run_command="nsenter --target $PID --mount --uts --ipc --net --pid -- sh -c"
+if  [ `$run_command "mount|grep $CONTPATH|wc -l"` -ne 0 ];then
+    echo "container $CONTAINER mount dir $CONTPATH is mounting!"
+    exit 1
+fi
+$run_command "[ -b $DEV ] ||mknod --mode 0600 $DEV b $DEVDEC"
+$run_command "mkdir /tmpmnt"
+$run_command "mount $DEV /tmpmnt"
+$run_command "mkdir -p $CONTPATH"
+$run_command "mount -o bind /tmpmnt/$SUBROOT/$SUBPATH $CONTPATH"
+$run_command "umount /tmpmnt"
+$run_command "rmdir /tmpmnt"
+check_result=`$run_command "mount|grep $CONTPATH|wc -l"`
+if [ $check_result -ne 0 ];then
+    echo "dymainc mount physics $HOSTPATH on $CONTAINER $CONTPATH is success!"
+else
+    echo "dymaninc mount physics $HOSTPATH on $CONTAINER $CONTPATH is fail!"
+fi
