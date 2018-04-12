@@ -10,8 +10,10 @@ $ ./dynamic_mount_docker_volume 955138b6c3ed /tmp/test /src
 
 ```
 
-给dynamic_mount_docker_volume赋可执行权限
+命令说明：
 
-下载nsenter 参见：https://github.com/jpetazzo/nsenter
+1. 给dynamic_mount_docker_volume赋可执行权限
 
-执行脚本给运行的容器挂载卷
+2. 下载nsenter 参见：https://github.com/jpetazzo/nsenter
+
+3. 执行脚本给运行的容器挂载卷
