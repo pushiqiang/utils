@@ -1,6 +1,7 @@
 # 1.django-rest-swagger==0.3.10
  
 Django==1.11
+
 djangorestframework==3.7.3
 
 支持YAML docstrings
@@ -18,3 +19,14 @@ djangorestframework==3.7.3
 django和celery的低耦合使用
 
 基于类的celery任务定义
+
+
+# 4. 使用Nginx代理s3，动态生成缩略图并缓存
+
+通过 {domain}/{uri}?s={size}实现获取指定大小缩略图
+
+原图：`localhost/u/1523562/avatar`
+
+缩略图：`localhost/u/1523562/avatar?s=200`
+
+缩略图：`localhost/u/1523562/avatar?s=100`

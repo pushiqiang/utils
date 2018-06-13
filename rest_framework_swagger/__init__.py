@@ -27,7 +27,7 @@ try:
         SWAGGER_SETTINGS = provided_settings
 
         for key, value in DEFAULT_SWAGGER_SETTINGS.items():
-            if key not in SWAGGER_SETTINGS:
+            if SWAGGER_SETTINGS and key not in SWAGGER_SETTINGS:
                 SWAGGER_SETTINGS[key] = value
 
     def reload_settings(*args, **kwargs):

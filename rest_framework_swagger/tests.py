@@ -10,10 +10,12 @@ except ImportError:
 
 from django.core.urlresolvers import RegexURLResolver, RegexURLPattern
 from django.conf import settings
-from django.conf.urls import patterns, url, include
-from django.contrib.auth.models import AnonymousUser, User
+from django.conf.urls import url, include
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.admindocs.utils import trim_docstring
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
+from django.test.client import Client
 from django.test.utils import override_settings
 from django.utils.decorators import classonlymethod
 try:
@@ -41,6 +43,8 @@ from .introspectors import ViewSetIntrospector, APIViewIntrospector, \
     WrappedAPIViewMethodIntrospector, IntrospectorHelper, \
     APIViewMethodIntrospector, get_data_type
 from . import DEFAULT_SWAGGER_SETTINGS
+
+User = get_user_model()
 
 
 def no_markdown(func):
@@ -87,42 +91,6 @@ class QuerySerializer(serializers.Serializer):
     query = serializers.CharField(max_length=100)
 
 
-def parse_json(response):
-    from io import BytesIO
-    from rest_framework.parsers import JSONParser
-    stream = BytesIO(response.content)
-    json = JSONParser().parse(stream)
-    return json
-
-
-class HTTPSTest(TestCase):
-    def setUp(self):
-        self.url_patterns = patterns(
-            '',
-            url(r'a-view/?$', MockApiView.as_view(), name='a test view'),
-            url(r'^swagger/', include('rest_framework_swagger.urls')),
-        )
-
-    def test_swagger_view(self):
-        urls = import_module(settings.ROOT_URLCONF)
-        urls.urlpatterns = self.url_patterns
-        response = self.client.get("/swagger/",
-                                   **{'wsgi.url_scheme': 'https'})
-        content = response.content.decode()
-        self.assertIn("url: 'https", content)
-
-    def test_api_docs(self):
-        from django.utils.six.moves.urllib import parse
-        urls = import_module(settings.ROOT_URLCONF)
-        urls.urlpatterns = self.url_patterns
-        response = self.client.get("/swagger/api-docs/",
-                                   **{'wsgi.url_scheme': 'https',
-                                      'SERVER_PORT': 443})
-        json = parse_json(response)
-        base_url = parse.urlparse(json['basePath'])
-        self.assertEqual('https', base_url.scheme)
-        self.assertEqual('testserver', base_url.netloc)
-
 
 base_path_SETTINGS = {
     'SWAGGER_SETTINGS': {
@@ -138,30 +106,9 @@ class DocumentationGeneratorMixin(object):
         return documentation_generator
 
 
-@override_settings(**base_path_SETTINGS)
-class OverrideBasePathTest(TestCase):
-    def setUp(self):
-        self.url_patterns = patterns(
-            '',
-            url(r'a-view/?$', MockApiView.as_view(), name='a test view'),
-            url(r'^swagger/', include('rest_framework_swagger.urls')),
-        )
-
-    def test_api_docs(self):
-        from django.utils.six.moves.urllib import parse
-        urls = import_module(settings.ROOT_URLCONF)
-        urls.urlpatterns = self.url_patterns
-        response = self.client.get("/swagger/api-docs/")
-        json = parse_json(response)
-        base_url = parse.urlparse(json['basePath'])
-        self.assertEqual('http', base_url.scheme)
-        self.assertEqual('tacotown.com', base_url.netloc)
-
-
 class UrlParserTest(TestCase):
     def setUp(self):
-        self.url_patterns = patterns(
-            '',
+        self.url_patterns = [
             url(r'a-view/?$', MockApiView.as_view(), name='a test view'),
             url(r'b-view$', MockApiView.as_view(), name='a test view'),
             url(r'c-view/$', MockApiView.as_view(), name='a test view'),
@@ -172,7 +119,7 @@ class UrlParserTest(TestCase):
             url(r'view-with-param/(:?<ID>\d+)/?$', MockApiView.as_view(),
                 name='another test view'),
             url(r'a-view-honky/?$', MockApiView.as_view(), name='a test view'),
-        )
+        ]
 
     def test_get_apis(self):
         urlparser = UrlParser()
@@ -219,7 +166,7 @@ class UrlParserTest(TestCase):
         self.assertEqual(len(self.url_patterns), len(apis))
 
     def test_flatten_url_tree_url_import(self):
-        urls = patterns('', url(r'api/base/path/', include(self.url_patterns)))
+        urls = [url(r'api/base/path/', include(self.url_patterns))]
         urlparser = UrlParser()
         apis = urlparser.get_apis(urls)
 
@@ -227,13 +174,12 @@ class UrlParserTest(TestCase):
 
     def test_resources_starting_with_letters_from_base_path(self):
         base_path = r'api/'
-        url_patterns = patterns(
-            '',
+        url_patterns = [
             url(r'test', MockApiView.as_view(), name='a test view'),
             url(r'pai_test', MockApiView.as_view(),
                 name='start with letters a, p, i'),
-        )
-        urls = patterns('', url(base_path, include(url_patterns)))
+        ]
+        urls = [url(base_path, include(url_patterns))]
         urlparser = UrlParser()
         apis = urlparser.get_apis(urls)
         resources = urlparser.get_top_level_apis(apis)
@@ -261,12 +207,11 @@ class UrlParserTest(TestCase):
         self.assertEqual(apis, apis2)
 
     def test_flatten_url_tree_excluded_url_name(self):
-        urls = patterns(
-            '',
+        urls = [
             url(r'a-view/?$', MockApiView.as_view(), name='a test view'),
             url(r'b-view$', MockApiView.as_view(), name='b test view'),
             url(r'excluded-view/$', MockApiView.as_view(), name='excluded_name'),
-        )
+        ]
         urlparser = UrlParser()
         apis = urlparser.__flatten_patterns_tree__(
             patterns=urls, exclude_url_names=['excluded_name'])
@@ -275,11 +220,10 @@ class UrlParserTest(TestCase):
         self.assertEqual(['/a-view/', '/b-view'], [api['path'] for api in apis])
 
     def test_flatten_url_tree_excluded_namesapce(self):
-        urls = patterns(
-            '',
+        urls = [
             url(r'api/base/path/',
                 include(self.url_patterns, namespace='exclude'))
-        )
+        ]
         urlparser = UrlParser()
         apis = urlparser.__flatten_patterns_tree__(
             patterns=urls, exclude_namespaces=['exclude'])
@@ -302,12 +246,11 @@ class UrlParserTest(TestCase):
         router.register(r'other_views', MockApiViewSet)
         router.register(r'more_views', MockApiViewSet)
 
-        urls_app = patterns('', url(r'^', include(router.urls)))
-        urls = patterns(
-            '',
+        urls_app = [url(r'^', include(router.urls))]
+        urls = [
             url(r'api/', include(urls_app)),
             url(r'test/', include(urls_app))
-        )
+        ]
         urlparser = UrlParser()
         apis = urlparser.get_apis(urls)
 
@@ -324,10 +267,9 @@ class UrlParserTest(TestCase):
 
     def test_get_api_callback_not_rest_view(self):
         urlparser = UrlParser()
-        non_api = patterns(
-            '',
+        non_api = [
             url(r'something', NonApiView.as_view())
-        )
+        ]
         callback = urlparser.__get_pattern_api_callback__(non_api)
 
         self.assertIsNone(callback)
@@ -359,7 +301,7 @@ class UrlParserTest(TestCase):
         self.assertEqual(data['pattern'], pattern)
 
     def test_assemble_data_with_non_api_callback(self):
-        bad_pattern = patterns('', url(r'^some_view/', NonApiView.as_view()))
+        bad_pattern = [url(r'^some_view/', NonApiView.as_view())]
 
         urlparser = UrlParser()
         data = urlparser.__assemble_endpoint_data__(bad_pattern)
@@ -407,23 +349,22 @@ class NestedUrlParserTest(TestCase):
             def get(self, request):
                 pass
 
-        api_fuzzy_url_patterns = patterns(
-            '', url(r'^item/$', FuzzyApiView.as_view(), name='find_me'))
-        api_shiny_url_patterns = patterns(
-            '', url(r'^item/$', ShinyApiView.as_view(), name='hide_me'))
+        api_fuzzy_url_patterns = [
+            url(r'^item/$', FuzzyApiView.as_view(), name='find_me')]
+        api_shiny_url_patterns =[
+            url(r'^item/$', ShinyApiView.as_view(), name='hide_me')]
 
-        fuzzy_app_urls = patterns(
-            '', url(r'^api/', include(api_fuzzy_url_patterns,
-                                      namespace='api_fuzzy_app')))
-        shiny_app_urls = patterns(
-            '', url(r'^api/', include(api_shiny_url_patterns,
-                                      namespace='api_shiny_app')))
+        fuzzy_app_urls = [
+            url(r'^api/', include(api_fuzzy_url_patterns,
+                                  namespace='api_fuzzy_app'))]
+        shiny_app_urls = [
+            url(r'^api/', include(api_shiny_url_patterns,
+                                  namespace='api_shiny_app'))]
 
-        self.project_urls = patterns(
-            '',
+        self.project_urls = [
             url('my_fuzzy_app/', include(fuzzy_app_urls)),
             url('my_shiny_app/', include(shiny_app_urls)),
-        )
+        ]
 
     def test_exclude_nested_urls(self):
 
@@ -448,15 +389,14 @@ class NestedUrlParserTest(TestCase):
 
 class DocumentationGeneratorTest(TestCase, DocumentationGeneratorMixin):
     def setUp(self):
-        self.url_patterns = patterns(
-            '',
+        self.url_patterns = [
             url(r'a-view/?$', MockApiView.as_view(), name='a test view'),
             url(r'a-view/child/?$', MockApiView.as_view()),
             url(r'a-view/<pk>/?$', MockApiView.as_view(),
                 name="detailed view for mock"),
             url(r'another-view/?$', MockApiView.as_view(),
                 name='another test view'),
-        )
+        ]
 
     def test_get_operations(self):
         class AnAPIView(APIView):
@@ -466,7 +406,7 @@ class DocumentationGeneratorTest(TestCase, DocumentationGeneratorMixin):
         api = {
             'path': 'a-path/',
             'callback': AnAPIView,
-            'pattern': patterns('')
+            'pattern': []
         }
         docgen = self.get_documentation_generator()
         operations = docgen.get_operations(api)
@@ -481,7 +421,7 @@ class DocumentationGeneratorTest(TestCase, DocumentationGeneratorMixin):
         api = {
             'path': 'a-path/',
             'callback': AnAPIView,
-            'pattern': patterns('')
+            'pattern': []
         }
 
         docgen = self.get_documentation_generator(for_user=None)
@@ -497,7 +437,7 @@ class DocumentationGeneratorTest(TestCase, DocumentationGeneratorMixin):
         api = {
             'path': 'a-path/',
             'callback': AnAPIView,
-            'pattern': patterns('')
+            'pattern': []
         }
 
         swagger_settings = copy.deepcopy(DEFAULT_SWAGGER_SETTINGS)
@@ -515,7 +455,7 @@ class DocumentationGeneratorTest(TestCase, DocumentationGeneratorMixin):
         api = {
             'path': 'a-path/',
             'callback': AnAPIView,
-            'pattern': patterns('')
+            'pattern': []
         }
         docgen = self.get_documentation_generator()
         operations = docgen.get_operations(api)
@@ -527,7 +467,7 @@ class DocumentationGeneratorTest(TestCase, DocumentationGeneratorMixin):
             serializer_class = CommentSerializer
 
         urlparser = UrlParser()
-        url_patterns = patterns('', url(r'my-api/', SerializedAPI.as_view()))
+        url_patterns = [url(r'my-api/', SerializedAPI.as_view())]
         apis = urlparser.get_apis(url_patterns)
 
         docgen = self.get_documentation_generator()
@@ -540,7 +480,7 @@ class DocumentationGeneratorTest(TestCase, DocumentationGeneratorMixin):
             serializer_class = CommentSerializer
 
         urlparser = UrlParser()
-        url_patterns = patterns('', url(r'my-api/', SerializedAPI.as_view()))
+        url_patterns = [url(r'my-api/', SerializedAPI.as_view())]
         apis = urlparser.get_apis(url_patterns)
 
         docgen = self.get_documentation_generator()
@@ -557,7 +497,7 @@ class DocumentationGeneratorTest(TestCase, DocumentationGeneratorMixin):
             serializer_class = CommentSerializer
 
         urlparser = UrlParser()
-        url_patterns = patterns('', url(r'my-api/', SerializedAPI.as_view()))
+        url_patterns = [url(r'my-api/', SerializedAPI.as_view())]
         apis = urlparser.get_apis(url_patterns)
 
         docgen = self.get_documentation_generator()
@@ -596,7 +536,7 @@ class DocumentationGeneratorTest(TestCase, DocumentationGeneratorMixin):
             serializer_class = CommentSerializer
 
         urlparser = UrlParser()
-        url_patterns = patterns('', url(r'my-api/', SerializedAPI.as_view()))
+        url_patterns = [url(r'my-api/', SerializedAPI.as_view())]
         apis = urlparser.get_apis(url_patterns)
 
         docgen = DocumentationGenerator()
@@ -612,7 +552,7 @@ class DocumentationGeneratorTest(TestCase, DocumentationGeneratorMixin):
             serializer_class = CommentSerializer
 
         urlparser = UrlParser()
-        url_patterns = patterns('', url(r'my-api/', SerializedAPI.as_view()))
+        url_patterns = [url(r'my-api/', SerializedAPI.as_view())]
         apis = urlparser.get_apis(url_patterns)
 
         docgen = self.get_documentation_generator()
@@ -708,10 +648,9 @@ class DocumentationGeneratorTest(TestCase, DocumentationGeneratorMixin):
                     return SerializerFoo
                 return SerializerBar
         urlparser = UrlParser()
-        url_patterns = patterns(
-            '',
+        url_patterns = [
             url(r'^a/$', TestView.as_view()),
-        )
+        ]
         apis = urlparser.get_apis(url_patterns)
 
         docgen = self.get_documentation_generator()
@@ -720,10 +659,9 @@ class DocumentationGeneratorTest(TestCase, DocumentationGeneratorMixin):
         self.assertEqual(SerializerBar, list(serializer_set)[0])
 
         urlparser = UrlParser()
-        url_patterns = patterns(
-            '',
+        url_patterns = [
             url(r'^a/b$', TestView.as_view(), {'b': True}),
-        )
+        ]
         apis = urlparser.get_apis(url_patterns)
 
         docgen = self.get_documentation_generator()
@@ -746,7 +684,7 @@ class DocumentationGeneratorTest(TestCase, DocumentationGeneratorMixin):
                     return SerializerForAnonymous
 
         urlparser = UrlParser()
-        url_patterns = patterns('', url(r'^a/$', TestView.as_view()))
+        url_patterns = [url(r'^a/$', TestView.as_view())]
         apis = urlparser.get_apis(url_patterns)
 
         docs_for_anonymous = self.get_documentation_generator()
@@ -785,7 +723,7 @@ class DocumentationGeneratorTest(TestCase, DocumentationGeneratorMixin):
                 """
                 return Response({'horse': request.GET.get('horse')})
 
-        url_patterns = patterns('', url(r'my-api/', MyCustomView.as_view()))
+        url_patterns = [url(r'my-api/', MyCustomView.as_view())]
         urlparser = UrlParser()
         apis = urlparser.get_apis(url_patterns)
         generator = self.get_documentation_generator()
@@ -815,8 +753,7 @@ class DocumentationGeneratorTest(TestCase, DocumentationGeneratorMixin):
             model = User
 
         # Test an object endpoint
-        url_patterns = patterns(
-            '',
+        url_patterns = [
             url(
                 r'^/api/endpoint/(?P<pk>[^/]+)$',
                 MyViewSet.as_view({
@@ -832,7 +769,7 @@ class DocumentationGeneratorTest(TestCase, DocumentationGeneratorMixin):
                     'get': 'list',
                     'post': 'create',
                 }))
-        )
+        ]
         urlparser = UrlParser()
         apis = urlparser.get_apis(url_patterns)
         api = apis[0]
@@ -1118,7 +1055,7 @@ class ViewSetMethodIntrospectorTests(TestCase):
     def test_get_summary_view(self):
         class MyViewSet(ModelViewSet):
             """
-            *Slimy angels*
+            Slimy angels
             """
             model = User
             serializer_class = CommentSerializer
@@ -1155,7 +1092,7 @@ class ViewSetMethodIntrospectorTests(TestCase):
 
             def create(self, request):
                 """
-                *Slimy angels*
+                Slimy angels
                 """
                 pass
 
@@ -1365,7 +1302,7 @@ class BaseMethodIntrospectorTest(TestCase, DocumentationGeneratorMixin):
 
         self.assertEqual(len(HiddenSerializer().get_fields()) - 1, len(params))
 
-        url_patterns = patterns('', url(r'my-api/', SerializedAPI.as_view()))
+        url_patterns = [url(r'my-api/', SerializedAPI.as_view())]
         urlparser = UrlParser()
         generator = self.get_documentation_generator()
         apis = urlparser.get_apis(url_patterns)
@@ -1394,7 +1331,7 @@ class BaseMethodIntrospectorTest(TestCase, DocumentationGeneratorMixin):
             len(params))
         self.assertEqual(params[0]['name'], 'email')
 
-        url_patterns = patterns('', url(r'my-api/', SerializedAPI.as_view()))
+        url_patterns = [url(r'my-api/', SerializedAPI.as_view())]
         urlparser = UrlParser()
         generator = self.get_documentation_generator()
         apis = urlparser.get_apis(url_patterns)
@@ -2039,7 +1976,7 @@ class YAMLDocstringParserTests(TestCase, DocumentationGeneratorMixin):
         introspector = APIViewMethodIntrospector(class_introspector, 'POST')
         generator = self.get_documentation_generator()
         serializer = generator._get_method_serializer(introspector)
-        url_patterns = patterns('', url(r'my-api/', SerializedAPI.as_view()))
+        url_patterns = [url(r'my-api/', SerializedAPI.as_view())]
         urlparser = UrlParser()
         apis = urlparser.get_apis(url_patterns)
         models = generator.get_models(apis)
@@ -2361,7 +2298,7 @@ class YAMLDocstringParserTests(TestCase, DocumentationGeneratorMixin):
             return "blarg"
 
         class_introspector = self.make_fbv_introspector(a_view)
-        url_patterns = patterns('', url(r'my-api/', a_view))
+        url_patterns = [url(r'my-api/', a_view)]
         urlparser = UrlParser()
         generator = self.get_documentation_generator()
         apis = urlparser.get_apis(url_patterns)
@@ -2401,7 +2338,7 @@ class YAMLDocstringParserTests(TestCase, DocumentationGeneratorMixin):
                 """
                 return Response({'horse': request.GET.get('horse')})
 
-        url_patterns = patterns('', url(r'my-api/', MyCustomView.as_view()))
+        url_patterns = [url(r'my-api/', MyCustomView.as_view())]
         urlparser = UrlParser()
         apis = urlparser.get_apis(url_patterns)
         generator = self.get_documentation_generator()
@@ -2442,18 +2379,19 @@ class YAMLDocstringParserTests(TestCase, DocumentationGeneratorMixin):
         def a_view(request):
             """
             ---
-            response_serializer: CommentSerializer
-            parameters:
-                - name: stuff
-                  paramType: body
-                  pytype: QuerySerializer
-                  type: int
+            POST: &default
+                response_serializer: CommentSerializer
+                parameters:
+                    - name: stuff
+                      paramType: body
+                      pytype: QuerySerializer
+                      type: int
             """
             from rest_framework.views import Response
             return Response("o noes!")
         generator = self.get_documentation_generator()
         urlparser = UrlParser()
-        url_patterns = patterns('', url(r'my-api/', a_view))
+        url_patterns = [url(r'my-api/', a_view)]
         apis = urlparser.get_apis(url_patterns)
         serializers = generator._get_serializer_set(apis)
         self.assertIn(CommentSerializer, serializers)
@@ -2461,7 +2399,7 @@ class YAMLDocstringParserTests(TestCase, DocumentationGeneratorMixin):
         api = {
             'path': 'a-path/',
             'callback': func_to_wrapper(a_view),
-            'pattern': patterns('')
+            'pattern': []
         }
         operations = generator.get_operations(api)
         self.assertEqual(len(operations), 1)

@@ -1,0 +1,9 @@
+version: '2'
+
+services:
+
+  test_nginx:
+    restart: always
+    build: ./nginx/
+    ports:
+      - "80:80"
