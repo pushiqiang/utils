@@ -30,3 +30,9 @@ django和celery的低耦合使用
 缩略图：`localhost/u/1523562/avatar?s=200`
 
 缩略图：`localhost/u/1523562/avatar?s=100`
+
+# 5. zerorpc 使用
+
+打印调用日志：打出所有的调用请求、参数和返回值，或写入日志
+
+检测文件改变自动重启： autoreload, 更新代码不用重启服务，使用werkzeug的run_with_reloader函数实现
