@@ -27,7 +27,7 @@ class RPCServer(RPCBaseServer, YourRPCModule):
 
 
 if __name__ == '__main__':
-    run(YourRPCModule)
+    run(RPCServer)
 
 ```
 
