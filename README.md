@@ -51,7 +51,6 @@ logger = get_logger(name='console')
 # 普通控制台和按日期周期文件输出日志
 logger = get_logger(name='sanic', use_rotating=True)
 
-
 ```
 output:   `2018-09-09 11:04:43 - your_logger_name - [main.py:7] INFO : Log info`
 
