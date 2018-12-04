@@ -36,7 +36,6 @@ class WholeTableIdReversePagination(object):
         return page_seek_id
 
     def paginate_queryset(self, queryset, request, view=None):
-        #assert hasattr(queryset.model, 'id'), 'The model must contain a primary key with a name `id`'
         # 最大id（伪数据量）
         self.max_id = queryset.aggregate(max_id=Max('id')).get('max_id')
         if self.max_id is None:
@@ -45,16 +44,8 @@ class WholeTableIdReversePagination(object):
         page_seek_id = self.get_page_seek_id(request, self.max_id)
 
         page_size = self.page_size
-
-        if page_seek_id <= self.page_size:
-            query_start_id = 0
-            page_size = page_seek_id
-        else:
-            query_start_id = page_seek_id - self.page_size
-
-        result = queryset.filter(id__gt=query_start_id).order_by('id')[0: page_size]
+        result = queryset.filter(id__lte=page_seek_id).order_by('-id')[0: page_size]
         result = list(result)
-        result.reverse()
 
         self.request = request
         self.page_seek_id = page_seek_id

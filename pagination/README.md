@@ -4,8 +4,8 @@
 根据id倒序（即创建时间倒叙）分页，适用简单场景
 
 使用max获取最大id，从最后一条数据向前分页
-通过id向前推进使用 `>` 和 `limit` 结合的方式优化分页加载
-eg: select * from yourtable where id > start_id limit 20;
+通过id倒序向前推进使用 `<=` 和 `limit` 结合的方式优化分页加载
+eg: select * from yourtable where id <= seek_id order by id desc limit 20;
 
 ### Using
 
