@@ -1,3 +1,7 @@
+全表id倒序分页
+
+原生sql使用Paginator分页
+
 
 ## 全表id倒序分页
 
