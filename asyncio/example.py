@@ -26,8 +26,7 @@ future = asyncio.ensure_future(somefunc(), loop=loop)
 # task = loop.run_in_executor(executor=None, func=somefunc, *args)
 
 # Wait for the single Future or coroutine object to complete with timeout. If timeout is None, block until the future completes.
-await
-asyncio.wait_for(fut, timeout, *, loop=None)
+await asyncio.wait_for(fut, timeout, *, loop=None)
 
 asyncio的协程是非抢占式的。协程如果不主动交出控制权，就会一直执行下去。
 假如一个协程占用了太多时间，那么其他协程就有可能超时挂掉。
@@ -94,8 +93,7 @@ def start_loop(loop):
 
 
 async def do_sleep(x, queue, msg=""):
-    await
-    asyncio.sleep(x)
+    await asyncio.sleep(x)
     queue.put(msg)
 
 
@@ -145,8 +143,7 @@ if __name__ == '__main__':
     async def main_work():
         while True:
             print('main on loop:%s' % id(loop))
-            await
-            asyncio.sleep(4)
+            await asyncio.sleep(4)
 
     # asyncio.run_coroutine_threadsafe(coro, loop)
     # Submit a coroutine to the given event loop. Thread-safe.
@@ -185,8 +182,7 @@ if __name__ == '__main__':
         while True:
             print('main on loop:%s' % id(main_loop))
             print("child threading id: %s" % threading.current_thread().ident)
-            await
-            asyncio.sleep(4)
+            await asyncio.sleep(4)
 
     print("main threading id: %s" % threading.current_thread().ident)
 
@@ -203,14 +199,12 @@ def thread_loop_task(loop):
     async def work_2():
         while True:
             print('work_2 on loop:%s' % id(loop))
-            await
-            asyncio.sleep(2)
+            await asyncio.sleep(2)
 
     async def work_4():
         while True:
             print('work_4 on loop:%s' % id(loop))
-            await
-            asyncio.sleep(4)
+            await asyncio.sleep(4)
 
     asyncio.ensure_future(work_2(), loop=loop)
     asyncio.ensure_future(work_4(), loop=loop)
@@ -228,8 +222,7 @@ if __name__ == '__main__':
     async def main_work():
         while True:
             print('main on loop:%s' % id(main_loop))
-            await
-            asyncio.sleep(4)
+            await asyncio.sleep(4)
 
     # Run until the future (an instance of Future) has completed.
     # 运行子线程和主线程公用的事件循环上的所有任务，直到完成
@@ -248,14 +241,12 @@ def thread_loop_task(loop):
     async def work_2():
         while True:
             print('work_2 on loop:%s' % id(loop))
-            await
-            asyncio.sleep(2)
+            await asyncio.sleep(2)
 
     async def work_4():
         while True:
             print('work_4 on loop:%s' % id(loop))
-            await
-            asyncio.sleep(4)
+            await asyncio.sleep(4)
 
     future = asyncio.gather(work_2(), work_4())
 
@@ -283,8 +274,7 @@ if __name__ == '__main__':
     async def main_work():
         while True:
             print('main on loop:%s' % id(main_loop))
-            await
-            asyncio.sleep(4)
+            await asyncio.sleep(4)
 
     # Run until the future (an instance of Future) has completed.
     # 运行主线程中事件循环的所有任务，直到完成
