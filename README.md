@@ -143,3 +143,5 @@ print(results)
 
 
 ```
+
+## 9. elasticsearch中文分词Dockerfile（elasticsearch-ik:6.5.4）
