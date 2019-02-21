@@ -17,3 +17,6 @@ $ ./dynamic_mount_docker_volume 955138b6c3ed /tmp/test /src
 2. 下载nsenter 参见：https://github.com/jpetazzo/nsenter
 
 3. 执行脚本给运行的容器挂载卷
+
+
+## subprocess.Popen 实时获取docker events事件
