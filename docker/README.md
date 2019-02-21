@@ -20,3 +20,5 @@ $ ./dynamic_mount_docker_volume 955138b6c3ed /tmp/test /src
 
 
 ## subprocess.Popen 实时获取docker events事件
+
+python event_monitor.py
