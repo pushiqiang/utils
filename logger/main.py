@@ -1,15 +1,18 @@
 # -*- encoding: utf-8 -*-
+import logging
+import logging.config
 
-import time
-from logger import get_logger
+import configs
 
-logger = get_logger(name='sanic')
+# 应用初始化时加载logger配置
+logging.config.dictConfig(configs.LOGGER_CONFIG)
 
-def test():
-    logger.info('enter test')
-    time.sleep(2)
-    logger.info('exit test')
+# 各文件使用
+logger = logging.getLogger(__name__)
 
-if __name__ == '__main__':
-    while(True):
-        test()
+logger.info('teste')
+try:
+    do_something()
+except Exception as e:
+    logger.error('error', exc_info=True)
+    process_error()

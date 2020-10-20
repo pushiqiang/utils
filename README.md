@@ -44,20 +44,30 @@ django和celery的低耦合使用
 检测文件改变自动重启： autoreload, 更新代码不用重启服务，使用werkzeug的run_with_reloader函数实现
 
 
-# 6. logger 日志切分周期输出文件
+# 6. logger 日志输出格式配置
 
 ```
-from logger import get_logger
+import logging
+import logging.config
 
+import configs
 
-# 普通控制台输出日志
-logger = get_logger(name='console')
+# 应用初始化时加载logger配置
+logging.config.dictConfig(configs.LOGGER_CONFIG)
 
-# 普通控制台和按日期周期文件输出日志
-logger = get_logger(name='sanic', use_rotating=True)
+# 各文件使用
+logger = logging.getLogger(__name__)
+
+logger.info('teste')
+try:
+    do_something()
+except Exception as e:
+    logger.error('error', exc_info=True)
+    process_error()
+
 
 ```
-output:   `2018-09-09 11:04:43 - your_logger_name - [main.py:7] INFO : Log info`
+output:   ` [2020-10-07 15:47:43 +0000] [118] [INFO] Redis cluster started`
 
 
 # 7. 全表id倒序分页
@@ -150,3 +160,7 @@ print(results)
 ```
 
 ## 9. elasticsearch中文分词Dockerfile（elasticsearch-ik:6.5.4）
+
+## 10. cassandra(python)的CQL和ORM使用方式
+
+## 11. redis实现锁
