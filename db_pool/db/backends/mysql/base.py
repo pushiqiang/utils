@@ -12,7 +12,7 @@ except ImportError as err:
     except ImportError:
         raise ImproperlyConfigured("Error loading MySQLdb or pymsql module.\n Did you install mysqlclient or pymysql")
 
-from db_utils.db.pool import DBPoolWrapper
+from db_pool.db.pool import DBPoolWrapper
 
 
 Database = DBPoolWrapper(Database)
