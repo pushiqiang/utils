@@ -164,3 +164,5 @@ print(results)
 ## 10. cassandra(python)的CQL和ORM使用方式
 
 ## 11. redis实现锁
+
+## 12. django连接池(DBUtils实现)
