@@ -3,7 +3,7 @@
 ###但这种方法会改变django的代码。对框架有侵入
 
 
-####方法 1
+#### 方法 1
 实现方法如下：
 　　把django/db/backends/mysql文件夹全部拷贝出来，放在项目的一个libs/mysql下面，然后修改base.py文件。
 　　或者把django/db/backends/mysql文件夹在django/db/backends/下面复制为mysql_pool文件夹，将base.py中所以import中的mysql替换为mysql_pool，这样可以直接在settings.py中设置'ENGINE':'django.db.backends.mysql_pool'
@@ -53,7 +53,7 @@ def get_connection_params(self):
 
 在mysql里使用 show status 或 show processlist查看连接情况
 
-####方法 2
+#### 方法 2
 直接在settings.py同级目录下的__init__.py文件中添加如下代码
 ```
 from django.conf import settings
