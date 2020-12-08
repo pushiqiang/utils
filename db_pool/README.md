@@ -12,7 +12,7 @@ DBUtils提供两种外部接口：
 实测证明 PersistentDB 的速度是最高的，但是在某些特殊情况下，数据库的连接过程可能异常缓慢，而此时的PooledDB则可以提供相对来说平均连接时间比较短的管理方式。
 
 ## django settings
-'''
+```
 DATABASES = {
     "default": {
         "ENGINE": "db_pool.db.backends.mysql",
@@ -30,5 +30,5 @@ DATABASES = {
         }
     }
 }
-'''
+```
 
