@@ -14,8 +14,9 @@ class DBPoolWrapper(object):
 
     def connect(self, **kwargs):
         db = kwargs.get("db", "")
+        db_pool = kwargs.pop('db_pool', {})
         if db not in self._pool:
-            self._pool[db] = PooledDB(creator=self._db_module, **kwargs)
+            self._pool[db] = PooledDB(creator=self._db_module, **db_pool, **kwargs)
         self._connection = self._pool[db].connection()
         return self._connection
 

@@ -24,12 +24,7 @@ class DatabaseWrapper(_DatabaseWrapper):
 
     def get_connection_params(self):
         params = super(DatabaseWrapper, self).get_connection_params()
-        pool_config = self.settings_dict.get('POOL', {})
-        minsize = pool_config.pop("mincached", 0)
-        maxsize = pool_config.pop("maxcached", 0)
-        params["mincached"] = int(minsize)
-        params["maxcached"] = int(maxsize)
-        params.update(pool_config)
+        params['db_pool'] = self.settings_dict.get('POOL', {})
 
         return params
 

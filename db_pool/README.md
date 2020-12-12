@@ -32,3 +32,14 @@ DATABASES = {
 }
 ```
 
+## Usages:
+sql:
+```
+from django.db import connection
+
+# 执行sql
+with connection.cursor() as cursor:
+    cursor.execute("SELECT * from test_user",)
+    row = cursor.fetchone()
+
+```
