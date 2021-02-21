@@ -19,11 +19,9 @@ djangorestframework==3.7.3
 
 subprocess.Popen 实时获取docker events事件()
 
-# 3. django + celery低耦合使用
+# 3. django utils
 
-django和celery的低耦合使用
-
-基于类的celery任务定义
+1. 实现django Model对象监控字段值变化更新
 
 
 # 4. 使用Nginx代理s3，动态生成缩略图并缓存
