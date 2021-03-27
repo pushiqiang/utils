@@ -9,6 +9,8 @@ class Model(models.Model):
     """
     VERSION_FIELD_NAME = 'version'
 
+    version = models.FloatField(verbose_name='版本号', default=0)
+
     class Meta:
         abstract = True
 
@@ -30,15 +32,19 @@ class Model(models.Model):
         super().save(force_insert, force_update, using, update_fields)
 
     def _prepare_optimistic_lock(self, qs, values):
-        if self._version:
+        if self._version is not None:
             qs = qs.filter(**{self.VERSION_FIELD_NAME: self._version})
             version_field = self._meta.get_field(self.VERSION_FIELD_NAME)
             # int
             if isinstance(self._version, int):
-                values.append((version_field, None, self._version + 1))
+                new_version = self._version + 1
+                values.append((version_field, None, new_version))
+                setattr(self, version_field.attname, new_version)
             # timestamp: float
             elif isinstance(self._version, float):
-                values.append((version_field, None, time))
+                new_version = time.time()
+                values.append((version_field, None, new_version))
+                setattr(self, version_field.attname, new_version)
             else:
                 raise ValueError('Optimistic locking version field type must be `integer` or `float`')
 
