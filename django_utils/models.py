@@ -2,6 +2,10 @@ import time
 from django.db import models
 
 
+class OptimisticLockError(Exception):
+    pass
+
+
 class Model(models.Model):
     """
     1. 对象字段值变化差异更新 BaseModel（不包含外键对象）
@@ -52,4 +56,7 @@ class Model(models.Model):
 
     def _do_update(self, base_qs, using, pk_val, values, update_fields, forced_update):
         base_qs, values = self._prepare_optimistic_lock(base_qs, values)
-        return super()._do_update(base_qs, using, pk_val, values, update_fields, forced_update)
+        updated = super()._do_update(base_qs, using, pk_val, values, update_fields, forced_update)
+        if update_fields and not updated:
+            raise OptimisticLockError("Failed to add optimistic lock for update {}.".format(self))
+        return updated
