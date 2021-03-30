@@ -34,13 +34,19 @@ Usages:
 
     session = conn.get_session()
     cql = 'SELECT * FROM example WHERE id=%s'
+
     result = await session.execute_future(cql, [uuid.UUID(u_id)])
+    result2 = session.execute(cql, [uuid.uuid4()])
+
+    obj = models.Example.create(id=uuid.uuid4(), example_field='xxx')
+    results = models.Example.filter(id=obj.id)
 
 """
 import logging
 
 import inspect
 
+# https://github.com/aio-libs/aiocassandra
 from aiocassandra import aiosession
 from cassandra import AlreadyExists, ConsistencyLevel
 from cassandra.auth import PlainTextAuthProvider

@@ -17,7 +17,10 @@ Usages:
     from cassandra.query import BatchStatement, BatchType
     from utils.cassandra import cql
 
-    cql.session.execute(cql.session.prepare("SELECT * FROM user WHERE user_id=? limit 1"), [user_id]).one()
+    result = cql.session.execute(cql.session.prepare("SELECT * FROM user WHERE user_id=? limit 1"), [user_id]).one()
+
+    query = await cql.session.prepare_future("SELECT * FROM user WHERE user_id=? limit 1")
+    result2 = await cql.session.execute_future(query, [user_id]).one()
 
     batch = BatchStatement(batch_type=BatchType.UNLOGGED)
     insert_statement = cql.session.prepare("INSERT INTO user (user_id, name, age, email) VALUES (?, ?, ?, ?)")
@@ -30,12 +33,14 @@ Usages:
 
 import logging
 
+# https://github.com/aio-libs/aiocassandra
+from aiocassandra import aiosession
 from cassandra.auth import PlainTextAuthProvider
 from cassandra.cluster import Cluster
 
 logger = logging.getLogger(__name__)
 
-# cassandra session 初始化为当前module下的单例
+# cassandra session 初始化为全局单例
 session = None
 
 
@@ -60,6 +65,7 @@ class CassandraCqlClient:
         global session
         session = cluster.connect(self.config.CASSANDRA_KEYSPACE,
                                   wait_for_all_pools=True)
+        aiosession(session)
         logger.info('CQL session prepared')
 
     def register_cassandra_cql(self):
