@@ -54,9 +54,13 @@ HTTP 200 OK
 ```
 from utils import QueryWrapper
 
+class User(models.Model):
+    username = models.CharField(max_length=100)
+    first_name = models.CharField(max_length=100)
+
 
 sql = 'select id, username, first_name from auth_user'
-queryset = QueryWrapper(sql)
+queryset = QueryWrapper(sql, User)
 
 count = queryset.count() 
 data = queryset.all()
