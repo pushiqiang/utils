@@ -10,6 +10,29 @@ djangorestframework==3.7.3
 
 
 # 2.docker
+## Dockerfile常用模板
+### Dockerfile_template
+
+### Dockerfile_selenium_python3
+
+```python
+# pip3 install selenium beautifulsoup4
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from bs4 import BeautifulSoup
+
+chrome_options = Options()
+chrome_options.add_argument('--headless')
+chrome_options.add_argument('--disable-gpu')
+driver = webdriver.Chrome(options=chrome_options, executable_path='/usr/bin/chromedriver')
+
+driver.get(url='url')
+self.driver.execute_script('window.scrollBy(0,500)')
+
+html = self.driver.page_source
+soup = BeautifulSoup(html, 'lxml')
+
+```
 
 ## dynamic_mount_docker_volume
 
