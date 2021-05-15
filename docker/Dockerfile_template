@@ -12,10 +12,10 @@ RUN apt-get update;\
 RUN mkdir /opt/somedir
 
 ENV PROJECT_NAME='test'
-ENV PYTHONPATH="${PYTHONPATH}:/opt/src"
+ENV PYTHONPATH="${PYTHONPATH}:/opt/somedir"
 
-COPY src/ /opt/src
-WORKDIR /opt/src
+COPY src/ /opt/somedir
+WORKDIR /opt/somedir
 
 # 如果在中国，pip使用豆瓣源
 RUN curl -s ifconfig.co/json | grep "China" > /dev/null && \

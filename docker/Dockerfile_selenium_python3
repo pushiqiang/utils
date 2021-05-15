@@ -1,0 +1,15 @@
+FROM selenium/standalone-chrome:4
+
+USER root
+
+RUN apt-get update;\
+    apt-get install -y vim python3-pip;\
+    true
+
+WORKDIR /opt/somedir
+ENV PYTHONPATH="${PYTHONPATH}:/opt/somedir"
+
+COPY src/ /opt/somedir
+RUN pip3 install -r /opt/somedir/requirements.txt
+
+# CMD ["python3", "main.py"]
