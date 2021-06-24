@@ -1,3 +1,17 @@
+## docker hub 源
+/etc/docker/daemon.json
+```
+{
+  "registry-mirrors": [
+    "https://registry.docker-cn.com",
+    "https://reg-mirror.qiniu.com",
+    "http://hub-mirror.c.163.com",
+    "https://docker.mirrors.ustc.edu.cn"
+  ]
+}
+```
+service docker restart
+
 ## Dockerfile常用模板
 ### Dockerfile_template
 
