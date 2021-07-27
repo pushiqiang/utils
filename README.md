@@ -191,3 +191,13 @@ print(results)
 ## 12. django连接池(DBUtils实现)
 
 ## 13. html_markdown_css(github,csdn)
+
+## 14. apt source(网易镜像源)
+
+ref: http://mirrors.163.com/.help/
+
+```
+# http://mirrors.163.com/.help/debian.html
+curl -s http://mirrors.163.com/.help/sources.list.buster > /etc/apt/sources.list
+```
+
