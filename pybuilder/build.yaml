@@ -1,0 +1,7 @@
+compile:
+  src_dir: '/home/test/src'
+  output_dir: '/home/test/output'
+  exe_files:
+    - '{src_dir}/runserver.py'
+  exclude_files:
+    - '{src_dir}/uwsgi.py'

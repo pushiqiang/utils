@@ -200,4 +200,43 @@ ref: http://mirrors.163.com/.help/
 # http://mirrors.163.com/.help/debian.html
 curl -s http://mirrors.163.com/.help/sources.list.buster > /etc/apt/sources.list
 ```
+## 15. 在web服务中轻量使用rabbitmq
+```python
+pip install kombu==4.6.11
 
+Usages:
+# step1: define routing_key
+TEST_ACTION_ROUTING_KEY = 'order.test'
+
+# step2: define message handler func
+# consumer: handle_test_action 位于 test.handler.test
+# queue: test.handler.test.handle_test_action
+def handle_test_action(message):
+    body = message.body
+    pass
+
+# step3: register message handle
+# bind queue to exchange by routing_key
+class MessageHandler(object):
+    def __init__(self):
+        self.handle_map = {
+            TEST_ACTION_ROUTING_KEY: handle_test_action,
+        }
+
+# step4: run consumer server
+mq_server = MQServer(rabbitmq_conn, MessageHandler())
+t = Thread(target=mq_server.run, args=[])
+t.setDaemon(True)
+t.start()
+
+# optional run producer
+mq_producer = MQProducer(rabbitmq_conn, RABBITMQ_EXCHANGE)
+
+# step5: publish message
+mq_producer.publish(TEST_ACTION_ROUTING_KEY, message)
+or
+mq_server.publish(TEST_ACTION_ROUTING_KEY, message)
+```
+
+## 16. 使用Cython编译整个python项目(pybuilder)
+ref: https://pushiqiang.blog.csdn.net/article/details/124734320
