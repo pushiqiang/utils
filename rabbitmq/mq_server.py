@@ -149,6 +149,8 @@ class MQProducer(object):
                                      retry=True)
                 except Exception:
                     logger.error('Send message to rabbitmq error.', exc_info=True)
+                finally:
+                    self._wait_publish_queue.task_done()
 
     def run_in_thread(self):
         self._thread = Thread(target=self._thread_publish_executor, args=[])
@@ -233,6 +235,8 @@ class MQServer(ConsumerProducerMixin):
                                      retry=True)
                 except Exception:
                     logger.error('Send message to rabbitmq error.', exc_info=True)
+                finally:
+                    self._wait_publish_queue.task_done()
 
     def _retry_publish(self, handle, body, message):
         """
@@ -291,12 +295,15 @@ class MQServer(ConsumerProducerMixin):
         else:
             channel = self._channels.get(channel_id)
             if not channel:
+                self._wait_ack_queue.task_done()
                 return
 
             try:
                 channel.basic_ack(delivery_tag)
             except Exception:
                 pass
+            finally:
+                self._wait_ack_queue.task_done()
 
     def on_consume_end(self, connection, default_channel):
         if self._producer_connection is not None:
