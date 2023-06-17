@@ -10,6 +10,22 @@ djangorestframework==3.7.3
 
 
 # 2.docker
+
+## docker hub 源
+`vim /etc/docker/daemon.json`
+
+```
+{
+  "registry-mirrors": [
+    "https://registry.docker-cn.com",
+    "https://reg-mirror.qiniu.com",
+    "http://hub-mirror.c.163.com",
+    "https://docker.mirrors.ustc.edu.cn"
+  ]
+}
+```
+重启 `docker` 服务: `service docker restart`
+
 ## Dockerfile常用模板
 ### Dockerfile_template
 
