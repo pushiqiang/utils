@@ -1,5 +1,6 @@
 ## docker hub 源
-/etc/docker/daemon.json
+`vim /etc/docker/daemon.json`
+
 ```
 {
   "registry-mirrors": [
@@ -10,7 +11,7 @@
   ]
 }
 ```
-service docker restart
+重启 `docker` 服务: `service docker restart`
 
 ## Dockerfile常用模板
 ### Dockerfile_template
