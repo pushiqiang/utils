@@ -3,7 +3,7 @@ import sys
 import argparse
 
 from yaml import load
-from sysconfig import get_python_version
+from sysconfig import get_python_version, get_paths
 
 try:
     from yaml import CLoader as Loader
@@ -37,7 +37,7 @@ class PyBuilder(object):
         self._format_config(conf)
 
         self._py_version = get_python_version()
-        self._py_include = '/usr/include/python%s' % self._py_version
+        self._py_include = get_paths()["include"]
         self._compile_files = []
 
     def _format_config(self, conf):
