@@ -256,3 +256,9 @@ mq_server.publish(TEST_ACTION_ROUTING_KEY, message)
 
 ## 16. 使用Cython编译整个python项目(pybuilder)
 ref: https://pushiqiang.blog.csdn.net/article/details/124734320
+
+## 17. 多线程下载脚本-支持断点续
+依赖 aria2, Linux 环境使用
+```
+./download.sh https://www.xxx.com/snapshots.tar
+```
