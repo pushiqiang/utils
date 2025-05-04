@@ -262,3 +262,13 @@ ref: https://pushiqiang.blog.csdn.net/article/details/124734320
 ```
 ./download.sh https://www.xxx.com/snapshots.tar
 ```
+
+## 18. 图像文本提取
+```python
+from img_text_extra import image_text_extra
+
+image_file = "./test.png"
+image_text = image_text_extra(image_file)
+print(image_text)
+```
+
