@@ -1,5 +1,5 @@
 
-from ocr import PaddleImageHelper
+from ocr_helper import PaddleImageHelper
 
 
 if __name__ == "__main__":
@@ -9,5 +9,5 @@ if __name__ == "__main__":
     assert helper.sha1 == "1929f48716716ba1968d72f0901d8b94adc781cf"
     assert helper.filename == "1929f48716716ba1968d72f0901d8b94adc781cf.jpg"
 
-    # text = helper.predict()
+    # text = await helper.predict()
     # print(text)
