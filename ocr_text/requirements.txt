@@ -1,4 +1,4 @@
 pillow
-# PyTesseract 需要装 Tesseract-OCR 引擎
-pytesseract==0.3.13
-opencv-python==4.11.0.86
+filetype==1.2.0
+paddlepaddle==3.0.0
+paddleocr==3.0.1
