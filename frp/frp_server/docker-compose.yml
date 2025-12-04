@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  frps:
+    image: fatedier/frps:v0.65.0
+    container_name: frps
+    restart: always   # always/no
+    privileged: false
+    ports:
+      - "7000:7000"         # frps
+      - "8009:8009"         # Server HTTP: 8000 -> 8009
+      - "10022:10022"       # SSH: 22 -> 10022
+
+    volumes:
+      - ./frps.toml:/etc/frp/frps.toml
+    command: ["-c", "/etc/frp/frps.toml"]

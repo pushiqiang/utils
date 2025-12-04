@@ -1,0 +1,7 @@
+bindAddr = "0.0.0.0"
+bindPort = 7000     # 与客户端建立连接的端口
+# vhostHTTPPort = 8009
+
+# 配置服务端的鉴权，这里使用Token进行鉴权，客户端必须用指定的Token才可以与服务端建立连接，防止滥用
+auth.method = "token"
+auth.token = "xxx"

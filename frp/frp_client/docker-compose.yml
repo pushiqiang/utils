@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  frpc:
+    image: fatedier/frpc:v0.65.0
+    container_name: frpc
+    restart: always   # always/no
+    privileged: false
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./frpc.toml:/etc/frp/frpc.toml
+    command: ["-c", "/etc/frp/frpc.toml"]
